@@ -6,8 +6,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SHEIN Rwanda | Trends & Fashion Online",
-  description: "Shop the latest trends in women's, men's, and kids' fashion at SHEIN Rwanda.",
+  title: "MiaLuxe | Trends & Fashion Online",
+  description: "Shop the latest trends in women's, men's, and kids' fashion at MiaLuxe.",
 };
 
 export default function RootLayout({
