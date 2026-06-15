@@ -1,4 +1,5 @@
-// src/components/ui/ProductCard.tsx
+/* eslint-disable @next/next/no-img-element */
+
 "use client";
 
 import { useState } from "react";
