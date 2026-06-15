@@ -1,0 +1,40 @@
+# .github/workflows/ci.yml
+name: MIA LUXE Continuous Integration
+
+# This pipeline triggers automatically whenever you push code to your main branch
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-verify:
+    name: Build & Verify Application
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Pull down your code into the secure GitHub runner
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Set up the exact Node environment we specified in our Dockerfile
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # 3. Clean install of all dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Enforce strict code quality (Catches TypeScript and routing errors)
+      - name: Run Next.js Linter
+        run: npm run lint
+
+      # 5. Compile the production build (Verifies our Phase 6 Standalone output works)
+      - name: Verify Production Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
