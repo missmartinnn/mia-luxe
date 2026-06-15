@@ -19,10 +19,10 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex space-x-8 text-xs font-medium tracking-widest uppercase">
-            <Link href="/" className="text-neutral-900 hover:text-pink-500 transition-colors">New In</Link>
-            <Link href="/" className="text-neutral-500 hover:text-pink-500 transition-colors">Dresses</Link>
-            <Link href="/" className="text-neutral-500 hover:text-pink-500 transition-colors">Outerwear</Link>
-            <Link href="/" className="text-neutral-500 hover:text-pink-500 transition-colors">Knitwear</Link>
+            <Link href="/category/new-arrivals" className="text-neutral-900 hover:text-pink-500 transition-colors">New Arrivals</Link>
+            <Link href="/category/women" className="text-neutral-500 hover:text-pink-500 transition-colors">Women</Link>
+            <Link href="/category/men" className="text-neutral-500 hover:text-pink-500 transition-colors">Men</Link>
+            <Link href="/category/kids" className="text-neutral-500 hover:text-pink-500 transition-colors">Kids</Link>
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
@@ -53,10 +53,10 @@ export default function Navbar() {
 
       {isOpen && (
         <div className="md:hidden bg-white border-t border-neutral-100 px-4 pt-2 pb-4 space-y-3 shadow-sm">
-          <Link href="/" className="block text-xs font-medium tracking-widest uppercase text-neutral-900">New In</Link>
-          <Link href="/" className="block text-xs font-medium tracking-widest uppercase text-neutral-500">Dresses</Link>
-          <Link href="/" className="block text-xs font-medium tracking-widest uppercase text-neutral-500">Outerwear</Link>
-          <Link href="/" className="block text-xs font-medium tracking-widest uppercase text-neutral-500">Knitwear</Link>
+          <Link href="/category/new-arrivals" className="text-neutral-900 hover:text-pink-500 transition-colors">New Arrivals</Link>
+          <Link href="/category/women" className="text-neutral-500 hover:text-pink-500 transition-colors">Women</Link>
+          <Link href="/category/men" className="text-neutral-500 hover:text-pink-500 transition-colors">Men</Link>
+          <Link href="/category/kids" className="text-neutral-500 hover:text-pink-500 transition-colors">Kids</Link>
           <div className="border-t border-neutral-100 pt-2">
             <Link href="/cart" className="flex justify-between text-xs font-medium tracking-widest uppercase text-pink-600">
               <span>View Active Cart</span>

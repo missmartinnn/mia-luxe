@@ -23,7 +23,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative flex flex-col bg-white border border-neutral-100 p-3 rounded-xs transition-shadow hover:shadow-md">
-      {/* Product Image */}
       <div className="w-full aspect-[3/4] bg-neutral-50 overflow-hidden relative rounded-xs">
         <img
           src={product.images[0]}
@@ -32,16 +31,13 @@ export default function ProductCard({ product }: ProductCardProps) {
         />
       </div>
 
-      {/* Item Metadata & Interactive Options */}
       <div className="mt-4 flex flex-col flex-grow text-left">
         <span className="text-[9px] text-neutral-400 font-bold tracking-widest uppercase mb-1">{product.category}</span>
         <h3 className="text-sm font-medium text-neutral-800 tracking-tight mb-2">
           {product.name}
         </h3>
         
-        {/* Variant Selectors */}
         <div className="space-y-2 mb-4">
-          {/* Size Selectors */}
           <div>
             <span className="text-[10px] text-neutral-400 uppercase tracking-wider block mb-1">Size:</span>
             <div className="flex gap-1.5 flex-wrap">
@@ -61,7 +57,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
 
-          {/* Color Selectors */}
           <div>
             <span className="text-[10px] text-neutral-400 uppercase tracking-wider block mb-1">Color:</span>
             <div className="flex gap-1.5 flex-wrap">
@@ -82,7 +77,6 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
 
-        {/* Price & Add to Cart Trigger */}
         <div className="mt-auto pt-2 border-t border-neutral-50 flex items-center justify-between">
           <span className="text-sm font-bold text-neutral-900">
             ${product.price.toFixed(2)}
@@ -95,7 +89,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 : "bg-neutral-950 text-white hover:bg-pink-400"
             }`}
           >
-            {isAdded ? "Added ✔" : "Add to Bag"}
+            {isAdded ? "Added ✔" : "Add to Cart"}
           </button>
         </div>
       </div>
