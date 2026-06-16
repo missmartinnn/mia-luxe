@@ -39,7 +39,7 @@ export default async function CategoryPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Category Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-light tracking-widest text-neutral-900 uppercase mb-4">
+        <h1 className="text-3xl md:text-4xl font-light tracking-widest text-neutral-50 uppercase mb-4">
           {pageTitle}
         </h1>
         <div className="h-[2px] w-16 bg-pink-300 mx-auto"></div>

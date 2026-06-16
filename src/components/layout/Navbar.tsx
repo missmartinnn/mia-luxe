@@ -13,13 +13,13 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <div className="flex-shrink-0">
-            <Link href="/" className="text-xl font-bold tracking-[0.25em] text-neutral-900 uppercase">
+            <Link href="/" className="text-xl font-bold tracking-[0.25em] text-black uppercase">
               MIA<span className="text-pink-400 font-light">LUXE</span>
             </Link>
           </div>
 
           <div className="hidden md:flex space-x-8 text-xs font-medium tracking-widest uppercase">
-            <Link href="/category/new-arrivals" className="text-neutral-900 hover:text-pink-500 transition-colors">New Arrivals</Link>
+            <Link href="/category/new-arrivals" className="text-neutral-500 hover:text-pink-500 transition-colors">New Arrivals</Link>
             <Link href="/category/women" className="text-neutral-500 hover:text-pink-500 transition-colors">Women</Link>
             <Link href="/category/men" className="text-neutral-500 hover:text-pink-500 transition-colors">Men</Link>
             <Link href="/category/kids" className="text-neutral-500 hover:text-pink-500 transition-colors">Kids</Link>
@@ -37,7 +37,7 @@ export default function Navbar() {
           <div className="md:hidden flex items-center">
             <button 
               onClick={() => setIsOpen(!isOpen)} 
-              className="text-neutral-700 hover:text-neutral-900 focus:outline-none"
+              className="text-neutral-700 hover:text-neutral-50 focus:outline-none"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {isOpen ? (
@@ -53,7 +53,7 @@ export default function Navbar() {
 
       {isOpen && (
         <div className="md:hidden bg-white border-t border-neutral-100 px-4 pt-2 pb-4 space-y-3 shadow-sm">
-          <Link href="/category/new-arrivals" className="text-neutral-900 hover:text-pink-500 transition-colors">New Arrivals</Link>
+          <Link href="/category/new-arrivals" className="text-neutral-500 hover:text-pink-500 transition-colors">New Arrivals</Link>
           <Link href="/category/women" className="text-neutral-500 hover:text-pink-500 transition-colors">Women</Link>
           <Link href="/category/men" className="text-neutral-500 hover:text-pink-500 transition-colors">Men</Link>
           <Link href="/category/kids" className="text-neutral-500 hover:text-pink-500 transition-colors">Kids</Link>

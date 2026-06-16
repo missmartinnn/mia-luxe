@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product } from "../lib/mockData";
+import { Product } from "@prisma/client";
 
 export interface CartItem {
   product: Product;

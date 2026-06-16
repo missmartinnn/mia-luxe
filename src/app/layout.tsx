@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-white text-neutral-900 antialiased min-h-screen flex flex-col`}>
+      <body className={`${inter.className} bg-white text-neutral-50 antialiased min-h-screen flex flex-col`}>
         <CartProvider>
           <Navbar />
           <main className="flex-grow">{children}</main>

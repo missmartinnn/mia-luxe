@@ -3,8 +3,9 @@
 "use client";
 
 import { useState } from "react";
-import { Product } from "../../lib/mockData";
+import { Product } from "@prisma/client"; // Updated to use the real database type
 import { useCart } from "../../context/CartContext";
+import Link from 'next/link';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAdd = () => {
+    // If your CartContext still expects mockData, you can use: addToCart(product as any, selectedSize, selectedColor)
     addToCart(product, selectedSize, selectedColor);
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 1500);
@@ -24,19 +26,30 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative flex flex-col bg-white border border-neutral-100 p-3 rounded-xs transition-shadow hover:shadow-md">
-      <div className="w-full aspect-[3/4] bg-neutral-50 overflow-hidden relative rounded-xs">
+      
+      {/* 1. LINK THE IMAGE */}
+      <Link 
+        href={`/products/${product.id}`} 
+        className="w-full aspect-[3/4] bg-neutral-50 overflow-hidden relative rounded-xs block cursor-pointer"
+      >
         <img
           src={product.images[0]}
           alt={product.name}
           className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-102"
         />
-      </div>
+      </Link>
 
       <div className="mt-4 flex flex-col flex-grow text-left">
-        <span className="text-[9px] text-neutral-400 font-bold tracking-widest uppercase mb-1">{product.category}</span>
-        <h3 className="text-sm font-medium text-neutral-800 tracking-tight mb-2">
-          {product.name}
-        </h3>
+        
+        {/* 2. LINK THE TITLE & CATEGORY */}
+        <Link href={`/products/${product.id}`} className="block mb-2 cursor-pointer group/text">
+          <span className="text-[9px] text-neutral-400 font-bold tracking-widest uppercase mb-1 block">
+            {product.category}
+          </span>
+          <h3 className="text-sm font-medium text-neutral-800 tracking-tight group-hover/text:text-pink-500 transition-colors">
+            {product.name}
+          </h3>
+        </Link>
         
         <div className="space-y-2 mb-4">
           <div>
