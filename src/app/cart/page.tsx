@@ -10,6 +10,10 @@ export default function CartPage() {
   const { data: session } = useSession();
   
   const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Checkout Form State
   const [formData, setFormData] = useState({

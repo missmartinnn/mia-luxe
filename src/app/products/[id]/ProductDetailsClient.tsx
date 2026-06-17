@@ -4,6 +4,7 @@ import { useState } from "react";
 // Import Store from Prisma so we can type the relation
 import { Product, Store } from "@prisma/client"; 
 import { useCart } from "../../../context/CartContext";
+import Image from "next/image"; // 👇 IMPORT NEXT.JS IMAGE LOGIC
 
 // Expand the type to include the nested store object
 type ProductWithStore = Product & {
@@ -36,28 +37,41 @@ export default function ProductDetailsClient({ product }: ProductDetailsProps) {
           {product.images.map((img, idx) => (
             <button 
               key={idx} 
+              type="button"
               onClick={() => setActiveImage(img)}
-              className={`w-20 h-24 flex-shrink-0 bg-neutral-50 overflow-hidden border transition-all ${
+              className={`w-20 h-24 flex-shrink-0 bg-neutral-50 overflow-hidden border transition-all relative ${
                 activeImage === img ? "border-neutral-900" : "border-transparent opacity-70 hover:opacity-100"
               }`}
             >
-              <img src={img} alt={`${product.name} - ${idx + 1}`} className="w-full h-full object-cover" />
+              {/* 👇 OPTIMIZED THUMBNAIL IMAGE */}
+              <Image 
+                src={img} 
+                alt={`${product.name} thumbnail - ${idx + 1}`} 
+                width={80} 
+                height={96} 
+                className="w-full h-full object-cover" 
+              />
             </button>
           ))}
         </div>
         
+        {/* Primary Preview Wrapper Box */}
         <div className="w-full aspect-[3/4] bg-neutral-100 overflow-hidden relative">
-          <img
+          {/* 👇 OPTIMIZED LCP COMPLIANT HERO DISPLAY */}
+          <Image
             src={activeImage}
             alt={product.name}
-            className="w-full h-full object-cover object-center"
+            fill
+            sizes="(max-w-768px) 100vw, 50vw"
+            priority // Eliminates LCP bandwidth warnings completely
+            className="object-cover object-center"
           />
         </div>
       </div>
 
       {/* RIGHT COLUMN: Product Details */}
       <div className="flex flex-col justify-center">
-        {/* NEW: Display the store name here */}
+        {/* Display the store name here */}
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-neutral-500 font-bold tracking-widest uppercase">
             {product.category}
@@ -89,6 +103,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsProps) {
               <div className="flex gap-2 flex-wrap">
                 {product.colors.map((color) => (
                   <button
+                    type="button"
                     key={color}
                     onClick={() => setSelectedColor(color)}
                     className={`px-4 py-2 border transition-all text-sm ${
@@ -113,6 +128,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsProps) {
               <div className="flex gap-2 flex-wrap">
                 {product.sizes.map((size) => (
                   <button
+                    type="button"
                     key={size}
                     onClick={() => setSelectedSize(size)}
                     className={`w-12 h-12 flex items-center justify-center border font-bold transition-all text-sm ${
@@ -130,6 +146,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsProps) {
         </div>
 
         <button
+          type="button"
           onClick={handleAdd}
           disabled={product.stock === 0}
           className={`w-full py-4 uppercase tracking-widest font-bold transition-all ${
