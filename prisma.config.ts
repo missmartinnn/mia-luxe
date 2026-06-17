@@ -1,11 +1,12 @@
 // prisma.config.ts
 import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: env("DIRECT_URL"), // TEMPORARILY set to the heavy-duty port (5432)
+    // Using process.env prevents the build from crashing in your CI/CD environment
+    url: process.env.DIRECT_URL,
   },
   migrations: {
     path: "prisma/migrations",
