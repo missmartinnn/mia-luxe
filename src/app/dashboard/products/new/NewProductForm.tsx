@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabaseClient"; 
 import Link from "next/link";
+import { CATEGORIES_DATA } from "../../../../lib/categories";
 
 type Store = { id: string; name: string };
 
@@ -15,19 +16,28 @@ export default function NewProductForm({ stores }: { stores: Store[] }) {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
-    storeId: stores[0]?.id || "", // Default to their first store!
+    storeId: stores[0]?.id || "", 
     name: "",
     description: "",
     price: "",
-    category: "Women",
+    category: "women", // Default main category slug
     subcategory: "",
     stock: "10",
     sizes: "XS, S, M, L, XL",
     colors: "Black, White",
   });
 
+  // Calculate dynamic subcategories based on current category selection
+  const activeCategoryData = CATEGORIES_DATA.find((c) => c.slug === formData.category);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "category") {
+      // Auto-reset subcategory when switching main category
+      setFormData({ ...formData, category: value, subcategory: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,20 +153,25 @@ export default function NewProductForm({ stores }: { stores: Store[] }) {
         </div>
       </div>
 
-      {/* Categorization */}
+      {/* DYNAMIC CATEGORIZATION */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-neutral-100">
         <div>
           <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Category *</label>
-          <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm bg-white">
-            <option value="Women">Women</option>
-            <option value="Men">Men</option>
-            <option value="Kids">Kids</option>
-            <option value="Accessories">Accessories</option>
+          <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm bg-white" required>
+            <option value="">Select Category</option>
+            {CATEGORIES_DATA.map((cat) => (
+              <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+            ))}
           </select>
         </div>
         <div>
-          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Subcategory</label>
-          <input type="text" name="subcategory" placeholder="e.g., Dresses, Tops" value={formData.subcategory} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm" />
+          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Subcategory *</label>
+          <select name="subcategory" value={formData.subcategory} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm bg-white disabled:bg-neutral-50" disabled={!activeCategoryData} required>
+            <option value="">Select Subcategory</option>
+            {activeCategoryData?.subcategories.map((sub) => (
+              <option key={sub.slug} value={sub.slug}>{sub.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 

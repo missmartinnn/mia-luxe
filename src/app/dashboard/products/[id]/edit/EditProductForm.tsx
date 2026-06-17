@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Link from "next/link";
+import { CATEGORIES_DATA } from "../../../../../lib/categories";
 
 type ProductProps = {
   product: {
@@ -33,15 +34,24 @@ export default function EditProductForm({ product }: ProductProps) {
     name: product.name,
     description: product.description,
     price: product.price.toString(),
-    category: product.category,
-    subcategory: product.subcategory || "",
+    category: product.category.toLowerCase(), // Normalize for the select match
+    subcategory: product.subcategory?.toLowerCase() || "",
     stock: product.stock.toString(),
     sizes: product.sizes.join(", "),
     colors: product.colors.join(", "),
   });
 
+  // Calculate dynamic subcategories based on current category selection
+  const activeCategoryData = CATEGORIES_DATA.find((c) => c.slug === formData.category);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "category") {
+      // Auto-reset subcategory when switching main category
+      setFormData({ ...formData, category: value, subcategory: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const removeImage = (indexToRemove: number) => {
@@ -85,47 +95,47 @@ export default function EditProductForm({ product }: ProductProps) {
     setIsUploading(false);
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (uploadedImages.length === 0) {
-    setError("Products must have at least one image.");
-    return;
-  }
-  
-  setIsLoading(true);
-  setError("");
-
-  const formattedData = {
-    ...formData,
-    sizes: formData.sizes.split(",").map((s) => s.trim()).filter(Boolean),
-    colors: formData.colors.split(",").map((c) => c.trim()).filter(Boolean),
-    images: uploadedImages, 
-  };
-
-  try {
-    const res = await fetch(`/api/seller/products/${product.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formattedData),
-    });
-
-    // SAFE CHECK: Check if the response is actually JSON before parsing
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new Error(`Server returned an invalid response (${res.status}). Please verify your API route file path.`);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (uploadedImages.length === 0) {
+      setError("Products must have at least one image.");
+      return;
     }
+    
+    setIsLoading(true);
+    setError("");
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to update product");
+    const formattedData = {
+      ...formData,
+      sizes: formData.sizes.split(",").map((s) => s.trim()).filter(Boolean),
+      colors: formData.colors.split(",").map((c) => c.trim()).filter(Boolean),
+      images: uploadedImages, 
+    };
 
-    router.push("/dashboard");
-    router.refresh();
-  } catch (err: any) {
-    setError(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      const res = await fetch(`/api/seller/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formattedData),
+      });
+
+      // SAFE CHECK: Check if the response is actually JSON before parsing
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(`Server returned an invalid response (${res.status}). Please verify your API route file path.`);
+      }
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update product");
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -151,20 +161,25 @@ const handleSubmit = async (e: React.FormEvent) => {
         </div>
       </div>
 
-      {/* Categorization */}
+      {/* DYNAMIC CATEGORIZATION */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-neutral-100">
         <div>
           <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Category *</label>
-          <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm bg-white">
-            <option value="Women">Women</option>
-            <option value="Men">Men</option>
-            <option value="Kids">Kids</option>
-            <option value="Accessories">Accessories</option>
+          <select name="category" value={formData.category} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm bg-white" required>
+            <option value="">Select Category</option>
+            {CATEGORIES_DATA.map((cat) => (
+              <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+            ))}
           </select>
         </div>
         <div>
-          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Subcategory</label>
-          <input type="text" name="subcategory" placeholder="e.g., Dresses, Tops" value={formData.subcategory} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm" />
+          <label className="block text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Subcategory *</label>
+          <select name="subcategory" value={formData.subcategory} onChange={handleChange} className="w-full border border-neutral-300 px-4 py-3 rounded-xs focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-sm bg-white disabled:bg-neutral-50" disabled={!activeCategoryData} required>
+            <option value="">Select Subcategory</option>
+            {activeCategoryData?.subcategories.map((sub) => (
+              <option key={sub.slug} value={sub.slug}>{sub.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 

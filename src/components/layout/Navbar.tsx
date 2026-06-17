@@ -5,23 +5,22 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useCart } from "../../context/CartContext";
+import { CATEGORIES_DATA } from "../../lib/categories"; // 👇 IMPORT CATEGORIES DATA
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isSubCategoryOpen, setIsSubCategoryOpen] = useState(false); // New state for subcategories dropdown
+  const [isSubCategoryOpen, setIsSubCategoryOpen] = useState(false);
   
   const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const subCategoryDropdownRef = useRef<HTMLDivElement>(null); // New ref
+  const subCategoryDropdownRef = useRef<HTMLDivElement>(null);
   
   const { cartCount } = useCart();
   const { data: session, status } = useSession();
 
-  // Detect if we are in a workspace environment (Seller Dashboard or Super Admin)
   const pathname = usePathname();
   const isWorkspace = pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin");
 
-  // Close dropdowns when clicking outside of them
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
@@ -35,7 +34,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Helper function to dynamically calculate active styling for categories
   const getLinkClassName = (href: string) => {
     const baseClass = "text-xs font-semibold tracking-widest uppercase transition-all pb-1 border-b-2";
     const isActive = pathname === href;
@@ -50,17 +48,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           
-          {/* FLEX TRICK: Keeps logo centered on dashboards */}
           {isWorkspace && <div className="w-10 md:w-24"></div>}
 
-          {/* Logo */}
           <div className={`flex-shrink-0 ${isWorkspace ? "mx-auto" : ""}`}>
             <Link href="/" className="text-xl font-bold tracking-[0.25em] text-black uppercase">
               MIA<span className="text-pink-400 font-light">LUXE</span>
             </Link>
           </div>
 
-          {/* Desktop Categories */}
           {!isWorkspace && (
             <div className="hidden md:flex space-x-8 items-center">
               <Link href="/category/new-arrivals" className={getLinkClassName("/category/new-arrivals")}>New Arrivals</Link>
@@ -68,7 +63,7 @@ export default function Navbar() {
               <Link href="/category/men" className={getLinkClassName("/category/men")}>Men</Link>
               <Link href="/category/kids" className={getLinkClassName("/category/kids")}>Kids</Link>
 
-              {/* 👇 ADDED: SUB COLLECTIONS DROPDOWN 👇 */}
+              {/* DYNAMIC SUB COLLECTIONS DROPDOWN */}
               <div className="relative" ref={subCategoryDropdownRef}>
                 <button
                   type="button"
@@ -82,19 +77,28 @@ export default function Navbar() {
                 </button>
 
                 {isSubCategoryOpen && (
-                  <div className="absolute left-0 mt-3 w-48 bg-white border border-neutral-100 shadow-lg py-2 rounded-xs z-50 transition-all">
-                    <Link href="/category/women?type=dresses" onClick={() => setIsSubCategoryOpen(false)} className="block px-4 py-2 text-xs font-medium tracking-wider uppercase text-neutral-700 hover:bg-neutral-50 hover:text-pink-500 transition-colors">
-                      Dresses
-                    </Link>
-                    <Link href="/category/women?type=jeans" onClick={() => setIsSubCategoryOpen(false)} className="block px-4 py-2 text-xs font-medium tracking-wider uppercase text-neutral-700 hover:bg-neutral-50 hover:text-pink-500 transition-colors">
-                      Jeans
-                    </Link>
-                    <Link href="/category/men?type=shirts" onClick={() => setIsSubCategoryOpen(false)} className="block px-4 py-2 text-xs font-medium tracking-wider uppercase text-neutral-700 hover:bg-neutral-50 hover:text-pink-500 transition-colors">
-                      Shirts
-                    </Link>
-                    <Link href="/category/women?type=skirts" onClick={() => setIsSubCategoryOpen(false)} className="block px-4 py-2 text-xs font-medium tracking-wider uppercase text-neutral-700 hover:bg-neutral-50 hover:text-pink-500 transition-colors">
-                      Skirts
-                    </Link>
+                  <div className="absolute left-0 mt-3 w-64 bg-white border border-neutral-100 shadow-lg py-4 rounded-xs z-50 transition-all max-h-[70vh] overflow-y-auto">
+                    {/* Loop through main categories */}
+                    {CATEGORIES_DATA.map((category) => (
+                      <div key={category.slug} className="mb-4 px-4 last:mb-0">
+                        <p className="text-[10px] font-bold tracking-widest text-neutral-400 uppercase mb-2 border-b border-neutral-100 pb-1">
+                          {category.name}
+                        </p>
+                        {/* Loop through subcategories */}
+                        <div className="space-y-1">
+                          {category.subcategories.map((sub) => (
+                            <Link 
+                              key={`${category.slug}-${sub.slug}`}
+                              href={`/category/${category.slug}?type=${sub.slug}`} 
+                              onClick={() => setIsSubCategoryOpen(false)} 
+                              className="block py-1.5 text-xs font-medium tracking-wider uppercase text-neutral-700 hover:text-pink-500 transition-colors"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -104,7 +108,6 @@ export default function Navbar() {
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4 md:space-x-6">
             
-            {/* Auth State / Profile Icon */}
             {status === "loading" ? (
               <div className="w-5 h-5 rounded-full animate-pulse bg-neutral-100"></div>
             ) : session ? (
@@ -119,7 +122,6 @@ export default function Navbar() {
                   </svg>
                 </button>
 
-                {/* Profile Submenu Dropdown */}
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white border border-neutral-100 shadow-lg py-2 rounded-xs z-50 transition-all">
                     <div className="px-4 py-2 border-b border-neutral-50 mb-1">
@@ -131,7 +133,6 @@ export default function Navbar() {
                       My Account
                     </Link>
 
-                    {/* DYNAMIC DASHBOARD LINKS */}
                     {session.user?.role === "admin" ? (
                       <Link href="/admin" onClick={() => setIsProfileOpen(false)} className="block px-4 py-2 text-xs font-semibold tracking-wider uppercase text-pink-500 hover:bg-pink-50 transition-colors">
                         Super Admin
@@ -164,7 +165,6 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Desktop Cart Button */}
             {!isWorkspace && (
               <Link href="/cart" className="hidden md:flex relative text-neutral-700 hover:text-pink-500 transition-colors p-2 items-center">
                 <span className="text-xs font-semibold tracking-wider uppercase">Cart</span>
@@ -174,7 +174,6 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* Mobile Actions */}
             {!isWorkspace && (
               <div className="md:hidden flex items-center space-x-2">
                 <button onClick={() => setIsOpen(!isOpen)} className="text-neutral-700 hover:text-neutral-900 focus:outline-none p-2">
@@ -193,14 +192,34 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
       {isOpen && !isWorkspace && (
-        <div className="md:hidden bg-white border-t border-neutral-100 px-4 pt-4 pb-6 space-y-4 shadow-sm flex flex-col text-sm font-medium tracking-widest uppercase">
+        <div className="md:hidden bg-white border-t border-neutral-100 px-4 pt-4 pb-6 space-y-4 shadow-sm flex flex-col text-sm font-medium tracking-widest uppercase overflow-y-auto max-h-[80vh]">
           <Link href="/category/new-arrivals" className="text-left text-neutral-500">New Arrivals</Link>
           <Link href="/category/women" className="text-left text-neutral-500">Women</Link>
           <Link href="/category/men" className="text-left text-neutral-500">Men</Link>
           <Link href="/category/kids" className="text-left text-neutral-500">Kids</Link>
           
+          {/* MOBILE DYNAMIC SUB COLLECTIONS */}
+          <div className="border-t border-neutral-100 pt-4 space-y-4">
+             <p className="text-[10px] text-neutral-400 uppercase tracking-widest font-bold">All Styles</p>
+             {CATEGORIES_DATA.map((category) => (
+                <div key={`mobile-${category.slug}`} className="pl-2">
+                  <p className="text-xs font-bold text-neutral-700 mb-2">{category.name}</p>
+                  <div className="space-y-2 pl-2">
+                     {category.subcategories.map((sub) => (
+                        <Link 
+                          key={`mobile-${category.slug}-${sub.slug}`}
+                          href={`/category/${category.slug}?type=${sub.slug}`} 
+                          className="block text-xs text-neutral-500"
+                        >
+                          {sub.name}
+                        </Link>
+                     ))}
+                  </div>
+                </div>
+             ))}
+          </div>
+
           <div className="border-t border-neutral-100 pt-4 flex flex-col space-y-4">
             {status !== "loading" && (
               session ? (
@@ -210,7 +229,6 @@ export default function Navbar() {
                   </div>
                   <Link href="/account" className="text-neutral-900">My Account</Link>
 
-                  {/* DYNAMIC LINKS (MOBILE) */}
                   {session.user?.role === "admin" ? (
                     <Link href="/admin" className="text-pink-500">Super Admin Dashboard</Link>
                   ) : session.user?.role === "seller" ? (
