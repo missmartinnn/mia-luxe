@@ -1,4 +1,3 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,9 +16,12 @@ model User {
   passwordHash  String?   // Optional now! (Google users won't have one)
   role          String    @default("customer") // "customer", "seller", "admin"
   
-  // ---> NEW: Customer Profile Details <---
+  // Customer Profile Details
   phone         String?   
   address       String?   @db.Text 
+  
+  // ---> NEW: Super Admin Ban System <---
+  isBanned      Boolean   @default(false)
   
   accounts      Account[]
   sessions      Session[]
@@ -76,14 +78,19 @@ model VerificationToken {
 
 // 5. Store Model (The Vendor's Shop)
 model Store {
-  id          String    @id @default(uuid())
-  name        String
-  description String?   @db.Text
-  ownerId     String
-  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  description     String?   @db.Text
+  ownerId         String
+  owner           User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products        Product[]
+  
+  // ---> NEW: Super Admin Verification System <---
+  status          String    @default("pending") // "pending", "verified", "rejected"
+  verificationDoc String?   @db.Text            // URL to their business license/proof
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@map("stores")
 }
@@ -118,11 +125,11 @@ model Order {
   user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   customerName    String
   customerEmail   String
-  customerPhone   String?     // <--- NEW: Track phone used for this specific order
+  customerPhone   String?     // Track phone used for this specific order
   shippingAddress String      @db.Text
   totalAmount     Float
-  paymentStatus   String      @default("pending") // "pending", "paid", "failed"
-  orderStatus     String      @default("processing") // "processing", "shipped", "delivered"
+  paymentStatus   String      @default("pending") // "pending", "paid", "failed", "refunded"
+  orderStatus     String      @default("processing") // "processing", "shipped", "delivered", "cancelled"
   items           OrderItem[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt

@@ -43,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
-        return user;
+        return user as any; 
       }
     })
   ],
@@ -55,13 +55,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     // Inject the user's role into the session so we can check if they are an admin/seller later!
     async jwt({ token, user }) {
+      // 'user' is only passed in the very first time the user logs in
       if (user) {
-        token.role = user.role;
+        token.role = (user as any).role || "customer"; // Fallback safety
         token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
+      // Map the token properties safely back to the client session object
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
@@ -70,7 +72,7 @@ export const authOptions: NextAuthOptions = {
     }
   },
   pages: {
-    signIn: '/login', // We will build a custom beautiful login page here next
+    signIn: '/login', // We built a custom beautiful login page here
   }
 };
 

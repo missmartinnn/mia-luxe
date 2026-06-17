@@ -14,9 +14,9 @@ export default function Navbar() {
   const { cartCount } = useCart();
   const { data: session, status } = useSession();
 
-  // Detect if we are in the seller dashboard
+  // Detect if we are in a workspace environment (Seller Dashboard or Super Admin)
   const pathname = usePathname();
-  const isDashboard = pathname?.startsWith("/dashboard");
+  const isWorkspace = pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin");
 
   // Close profile dropdown when clicking outside of it
   useEffect(() => {
@@ -34,20 +34,20 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           
-          {/* FLEX TRICK: If dashboard, add a blank invisible div on the left 
-            so justify-between keeps the logo perfectly centered 
+          {/* FLEX TRICK: If workspace, add a blank invisible div on the left 
+              so justify-between keeps the logo perfectly centered on all screens
           */}
-          {isDashboard && <div className="w-24 hidden md:block"></div>}
+          {isWorkspace && <div className="w-10 md:w-24"></div>}
 
           {/* Logo */}
-          <div className={`flex-shrink-0 ${isDashboard ? "mx-auto" : ""}`}>
+          <div className={`flex-shrink-0 ${isWorkspace ? "mx-auto" : ""}`}>
             <Link href="/" className="text-xl font-bold tracking-[0.25em] text-black uppercase">
               MIA<span className="text-pink-400 font-light">LUXE</span>
             </Link>
           </div>
 
-          {/* Desktop Categories (HIDDEN ON DASHBOARD) */}
-          {!isDashboard && (
+          {/* Desktop Categories (HIDDEN IN WORKSPACE) */}
+          {!isWorkspace && (
             <div className="hidden md:flex space-x-8 text-xs font-medium tracking-widest uppercase">
               <Link href="/category/new-arrivals" className="text-neutral-500 hover:text-pink-500 transition-colors">New Arrivals</Link>
               <Link href="/category/women" className="text-neutral-500 hover:text-pink-500 transition-colors">Women</Link>
@@ -56,10 +56,10 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Desktop Right Side Actions */}
-          <div className="hidden md:flex items-center space-x-6">
+          {/* Right Side Actions */}
+          <div className="flex items-center space-x-4 md:space-x-6">
             
-            {/* Auth State (Profile Icon Dropdown) */}
+            {/* Auth State / Profile Icon (ALWAYS VISIBLE) */}
             {status === "loading" ? (
               <div className="w-5 h-5 rounded-full animate-pulse bg-neutral-100"></div>
             ) : session ? (
@@ -90,8 +90,16 @@ export default function Navbar() {
                       My Account
                     </Link>
 
-                    {/* DYNAMIC SELLER LINK */}
-                    {session.user?.role === "seller" || session.user?.role === "admin" ? (
+                    {/* DYNAMIC DASHBOARD LINKS */}
+                    {session.user?.role === "admin" ? (
+                      <Link 
+                        href="/admin" 
+                        onClick={() => setIsProfileOpen(false)}
+                        className="block px-4 py-2 text-xs font-semibold tracking-wider uppercase text-pink-500 hover:bg-pink-50 transition-colors"
+                      >
+                        Super Admin
+                      </Link>
+                    ) : session.user?.role === "seller" ? (
                       <Link 
                         href="/dashboard" 
                         onClick={() => setIsProfileOpen(false)}
@@ -122,49 +130,50 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <Link href="/login" className="text-xs font-semibold tracking-wider uppercase text-neutral-700 hover:text-pink-500 transition-colors">
+              <Link href="/login" className="hidden md:block text-xs font-semibold tracking-wider uppercase text-neutral-700 hover:text-pink-500 transition-colors">
                 Log In
               </Link>
             )}
 
-            {/* Cart Button (HIDDEN ON DASHBOARD) */}
-            {!isDashboard && (
-              <Link href="/cart" className="relative text-neutral-700 hover:text-pink-500 transition-colors p-2 flex items-center">
+            {/* Desktop Cart Button (HIDDEN IN WORKSPACE) */}
+            {!isWorkspace && (
+              <Link href="/cart" className="hidden md:flex relative text-neutral-700 hover:text-pink-500 transition-colors p-2 items-center">
                 <span className="text-xs font-semibold tracking-wider uppercase">Cart</span>
                 <span className="ml-1.5 bg-neutral-950 text-white text-[10px] font-bold px-2 py-0.5 rounded-full transition-all group-hover:bg-pink-400">
                   {cartCount}
                 </span>
               </Link>
             )}
+
+            {/* Mobile Actions: Cart & Hamburger (HIDDEN IN WORKSPACE) */}
+            {!isWorkspace && (
+              <div className="md:hidden flex items-center space-x-4">
+                <Link href="/cart" className="relative text-neutral-700 flex items-center">
+                  <span className="bg-neutral-950 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {cartCount}
+                  </span>
+                </Link>
+                <button 
+                  onClick={() => setIsOpen(!isOpen)} 
+                  className="text-neutral-700 hover:text-neutral-900 focus:outline-none p-2"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {isOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* Mobile Menu Actions (HIDDEN ON DASHBOARD) */}
-          {!isDashboard && (
-            <div className="md:hidden flex items-center space-x-4">
-              <Link href="/cart" className="relative text-neutral-700 flex items-center">
-                <span className="bg-neutral-950 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                  {cartCount}
-                </span>
-              </Link>
-              <button 
-                onClick={() => setIsOpen(!isOpen)} 
-                className="text-neutral-700 hover:text-neutral-900 focus:outline-none p-2"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {isOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
-                </svg>
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown (HIDDEN ON DASHBOARD) */}
-      {isOpen && !isDashboard && (
+      {/* Mobile Menu Dropdown (HIDDEN IN WORKSPACE) */}
+      {isOpen && !isWorkspace && (
         <div className="md:hidden bg-white border-t border-neutral-100 px-4 pt-4 pb-6 space-y-4 shadow-sm flex flex-col text-sm font-medium tracking-widest uppercase">
           <Link href="/category/new-arrivals" className="text-neutral-500 hover:text-pink-500 transition-colors">New Arrivals</Link>
           <Link href="/category/women" className="text-neutral-500 hover:text-pink-500 transition-colors">Women</Link>
@@ -180,8 +189,10 @@ export default function Navbar() {
                   </div>
                   <Link href="/account" className="text-neutral-900">My Account</Link>
 
-                  {/* DYNAMIC SELLER LINK (MOBILE) */}
-                  {session.user?.role === "seller" || session.user?.role === "admin" ? (
+                  {/* DYNAMIC LINKS (MOBILE) */}
+                  {session.user?.role === "admin" ? (
+                    <Link href="/admin" className="text-pink-500">Super Admin Dashboard</Link>
+                  ) : session.user?.role === "seller" ? (
                     <Link href="/dashboard" className="text-emerald-600">Seller Dashboard</Link>
                   ) : (
                     <Link href="/dashboard/store/new" className="text-emerald-600">Become a Seller</Link>
