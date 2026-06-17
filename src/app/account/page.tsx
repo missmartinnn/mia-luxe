@@ -48,10 +48,9 @@ export default async function AccountPage() {
           {/* LEFT COLUMN: Sidebar Navigation */}
           <div className="md:col-span-1">
             <div className="bg-white border border-neutral-200 rounded-xs p-5 flex flex-col space-y-4 sticky top-24 shadow-sm">
-              <Link href="/account" className="text-xs font-bold tracking-widest uppercase text-pink-500">
+              <Link href="#profile" className="text-xs font-bold tracking-widest uppercase text-pink-500 transition-colors">
                 Profile Overview
               </Link>
-              {/* 👇 Updated to Anchor Links */}
               <Link href="#delivery-info" className="text-xs font-bold tracking-widest uppercase text-neutral-400 hover:text-neutral-900 transition-colors">
                 Delivery Info
               </Link>
@@ -71,7 +70,31 @@ export default async function AccountPage() {
           {/* RIGHT COLUMN: Main Content Area */}
           <div className="md:col-span-3 space-y-8">
             
-            {/* Account Settings / Logistics Component (Wrapped with an ID for linking) */}
+            {/* STATIC READ-ONLY PROFILE OVERVIEW */}
+            <div id="profile" className="bg-white border border-neutral-200 rounded-xs p-6 sm:p-8 shadow-sm scroll-mt-28">
+              <h2 className="text-lg font-medium text-neutral-900 mb-6 pb-4 border-b border-neutral-100">
+                Profile Information
+              </h2>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Full Name</p>
+                  <p className="text-sm font-medium text-neutral-950">{user.name || "Not provided"}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Email Address</p>
+                  <p className="text-sm font-medium text-neutral-950">{user.email}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Account Tier</p>
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-xs ${user.role === 'admin' ? 'bg-purple-50 text-purple-600' : user.role === 'seller' ? 'bg-emerald-50 text-emerald-600' : 'bg-pink-50 text-pink-600'}`}>
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Account Settings / Logistics Component (Interactive Form) */}
             <div id="delivery-info" className="scroll-mt-28">
               <AccountForm 
                 initialPhone={user.phone || ""} 
@@ -79,7 +102,7 @@ export default async function AccountPage() {
               />
             </div>
 
-            {/* LIVE: Recent Orders Section (Added ID for linking) */}
+            {/* LIVE: Recent Orders Section */}
             <div id="orders" className="bg-white border border-neutral-200 rounded-xs p-6 sm:p-8 shadow-sm scroll-mt-28">
               <h2 className="text-lg font-medium text-neutral-900 mb-6 pb-4 border-b border-neutral-100">
                 Recent Orders
