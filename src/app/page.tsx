@@ -13,7 +13,6 @@ export default async function Home() {
   });
 
   return (
-    // 👇 ADDED bg-white and text-neutral-900 here to fix the contrast!
     <div className="bg-white text-neutral-900 min-h-screen pb-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         

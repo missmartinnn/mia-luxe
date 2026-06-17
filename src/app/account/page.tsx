@@ -1,9 +1,9 @@
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../app/api/auth/[...nextauth]/route";
+import { authOptions } from "../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from "../../lib/prisma";
 import Link from "next/link";
-import ProfileEditForm from "./ProfileEditForm"; 
+import AccountForm from "./AccountForm"; 
 
 export default async function AccountPage() {
   // 1. Securely fetch the session on the server
@@ -14,9 +14,9 @@ export default async function AccountPage() {
     redirect("/login");
   }
 
-  // 2. Fetch the user's latest data using their EMAIL (NextAuth safe)
+  // 2. Fetch the user's latest data using their EMAIL
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email }, // <--- THE FIX
+    where: { email: session.user.email }, 
     include: {
       orders: {
         orderBy: { createdAt: "desc" },
@@ -49,13 +49,14 @@ export default async function AccountPage() {
           <div className="md:col-span-1">
             <div className="bg-white border border-neutral-200 rounded-xs p-5 flex flex-col space-y-4 sticky top-24 shadow-sm">
               <Link href="/account" className="text-xs font-bold tracking-widest uppercase text-pink-500">
-                Profile
+                Profile Overview
               </Link>
-              <Link href="/account/orders" className="text-xs font-bold tracking-widest uppercase text-neutral-400 hover:text-neutral-900 transition-colors">
+              {/* 👇 Updated to Anchor Links */}
+              <Link href="#delivery-info" className="text-xs font-bold tracking-widest uppercase text-neutral-400 hover:text-neutral-900 transition-colors">
+                Delivery Info
+              </Link>
+              <Link href="#orders" className="text-xs font-bold tracking-widest uppercase text-neutral-400 hover:text-neutral-900 transition-colors">
                 Order History
-              </Link>
-              <Link href="/account/addresses" className="text-xs font-bold tracking-widest uppercase text-neutral-400 hover:text-neutral-900 transition-colors">
-                Saved Addresses
               </Link>
               
               {/* Conditional link: Only visible to Sellers or Admins */}
@@ -70,25 +71,16 @@ export default async function AccountPage() {
           {/* RIGHT COLUMN: Main Content Area */}
           <div className="md:col-span-3 space-y-8">
             
-            {/* Profile Overview (Now handles edits dynamically) */}
-            <div className="bg-white border border-neutral-200 rounded-xs p-6 sm:p-8 shadow-sm">
-              <h2 className="text-lg font-medium text-neutral-900 mb-6 pb-4 border-b border-neutral-100">
-                Profile Information
-              </h2>
-              
-              <ProfileEditForm 
-                user={{
-                  name: user.name || "",
-                  email: user.email || "",
-                  role: user.role,
-                  phone: user.phone || "",
-                  address: user.address || ""
-                }} 
+            {/* Account Settings / Logistics Component (Wrapped with an ID for linking) */}
+            <div id="delivery-info" className="scroll-mt-28">
+              <AccountForm 
+                initialPhone={user.phone || ""} 
+                initialAddress={user.address || ""} 
               />
             </div>
 
-            {/* LIVE: Recent Orders Section */}
-            <div className="bg-white border border-neutral-200 rounded-xs p-6 sm:p-8 shadow-sm">
+            {/* LIVE: Recent Orders Section (Added ID for linking) */}
+            <div id="orders" className="bg-white border border-neutral-200 rounded-xs p-6 sm:p-8 shadow-sm scroll-mt-28">
               <h2 className="text-lg font-medium text-neutral-900 mb-6 pb-4 border-b border-neutral-100">
                 Recent Orders
               </h2>

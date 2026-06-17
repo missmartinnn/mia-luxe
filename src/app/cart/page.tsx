@@ -10,10 +10,6 @@ export default function CartPage() {
   const { data: session } = useSession();
   
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
   
   // Checkout Form State
   const [formData, setFormData] = useState({
@@ -21,7 +17,7 @@ export default function CartPage() {
     email: "",
     address: "",
     phone: "",
-    paymentMethod: "momo"
+    paymentMethod: "momo" // Default payment type simulation
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,14 +28,29 @@ export default function CartPage() {
     setIsMounted(true); 
   }, []);
 
-  // NEW: Pre-fill user details if they are logged in
+  // 👇 NEW: Pre-fill user details from session AND fetch saved database defaults
   useEffect(() => {
     if (session?.user) {
+      // 1. Instantly fill what we already know from the active session
       setFormData((prev) => ({
         ...prev,
         name: session.user.name || "",
         email: session.user.email || "",
       }));
+
+      // 2. Fetch the extra database defaults (phone & address)
+      fetch("/api/user/profile")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && !data.error) {
+            setFormData((prev) => ({
+              ...prev,
+              phone: data.phone || prev.phone,
+              address: data.address || prev.address,
+            }));
+          }
+        })
+        .catch((err) => console.error("Failed to fetch user delivery defaults", err));
     }
   }, [session]);
 
@@ -50,20 +61,21 @@ export default function CartPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-const handleCheckoutSubmit = async (e: React.FormEvent) => {
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) return;
     
     setIsSubmitting(true);
 
     try {
-      // 1. Format the data to send to our API
+      // 1. Format the data to send to our API (Including payment method simulation)
       const payload = {
         items: cart,
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
         shippingAddress: formData.address,
+        paymentMethod: formData.paymentMethod,
         totalAmount: cartSubtotal,
       };
 
@@ -93,6 +105,16 @@ const handleCheckoutSubmit = async (e: React.FormEvent) => {
     }
   };
 
+  // Map the slug values to pretty UI display names
+  const getPaymentLabel = (method: string) => {
+    const mapping: { [key: string]: string } = {
+      momo: "Mobile Money (MoMo)",
+      card: "Credit / Debit Card",
+      paypal: "PayPal Express Checkout"
+    };
+    return mapping[method] || method;
+  };
+
   if (orderConfirmed) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -104,6 +126,7 @@ const handleCheckoutSubmit = async (e: React.FormEvent) => {
           <p className="text-xs text-neutral-600"><span className="font-semibold text-neutral-950">Order ID:</span> {generatedOrderId}</p>
           <p className="text-xs text-neutral-600"><span className="font-semibold text-neutral-950">Deliver To:</span> {formData.name}</p>
           <p className="text-xs text-neutral-600"><span className="font-semibold text-neutral-950">Shipping Destination:</span> {formData.address}</p>
+          <p className="text-xs text-neutral-600"><span className="font-semibold text-neutral-950">Payment Simulated via:</span> <span className="uppercase text-pink-600 font-semibold">{getPaymentLabel(formData.paymentMethod)}</span></p>
         </div>
 
         <Link href="/" className="inline-block bg-neutral-950 text-white text-[10px] font-bold tracking-widest uppercase px-8 py-3.5 hover:bg-pink-400 transition-colors">
@@ -142,11 +165,11 @@ const handleCheckoutSubmit = async (e: React.FormEvent) => {
                 </div>
                 <div className="flex items-center justify-between mt-4">
                   <div className="flex items-center border border-neutral-300 rounded-xs">
-                    <button onClick={() => updateQuantity(item.product.id, item.selectedSize, item.selectedColor, item.quantity - 1)} className="px-2.5 py-1 text-xs font-semibold hover:bg-neutral-50">-</button>
+                    <button type="button" onClick={() => updateQuantity(item.product.id, item.selectedSize, item.selectedColor, item.quantity - 1)} className="px-2.5 py-1 text-xs font-semibold hover:bg-neutral-50">-</button>
                     <span className="px-3 text-xs font-medium text-neutral-950">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.product.id, item.selectedSize, item.selectedColor, item.quantity + 1)} className="px-2.5 py-1 text-xs font-semibold hover:bg-neutral-50">+</button>
+                    <button type="button" onClick={() => updateQuantity(item.product.id, item.selectedSize, item.selectedColor, item.quantity + 1)} className="px-2.5 py-1 text-xs font-semibold hover:bg-neutral-50">+</button>
                   </div>
-                  <button onClick={() => removeFromCart(item.product.id, item.selectedSize, item.selectedColor)} className="text-[10px] text-red-500 uppercase font-bold">Remove</button>
+                  <button type="button" onClick={() => removeFromCart(item.product.id, item.selectedSize, item.selectedColor)} className="text-[10px] text-red-500 uppercase font-bold">Remove</button>
                 </div>
               </div>
               <span className="text-xs font-bold text-neutral-950">${(item.product.price * item.quantity).toFixed(2)}</span>
@@ -161,15 +184,30 @@ const handleCheckoutSubmit = async (e: React.FormEvent) => {
             {/* If logged in, we hide name/email as we already have them */}
             {!session && (
               <>
-                <input type="text" required name="name" value={formData.name} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Full Name" />
-                <input type="email" required name="email" value={formData.email} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Email" />
+                <input type="text" required name="name" value={formData.name} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 bg-white focus:outline-none focus:border-neutral-950" placeholder="Full Name" />
+                <input type="email" required name="email" value={formData.email} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 bg-white focus:outline-none focus:border-neutral-950" placeholder="Email" />
               </>
             )}
 
             <div className="pt-2">
               <label className="block text-[10px] uppercase font-bold text-neutral-500 mb-2">Delivery Information</label>
-              <input type="text" required name="phone" value={formData.phone} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 mb-4" placeholder="Phone Number" />
-              <textarea required rows={3} name="address" value={formData.address} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 resize-none" placeholder="Full Shipping Address" />
+              <input type="text" required name="phone" value={formData.phone} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 mb-3 bg-white focus:outline-none focus:border-neutral-950" placeholder="Phone Number" />
+              <textarea required rows={3} name="address" value={formData.address} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 resize-none bg-white focus:outline-none focus:border-neutral-950" placeholder="Full Shipping Address" />
+            </div>
+
+            <div className="pt-2">
+              <label className="block text-[10px] uppercase font-bold text-neutral-500 mb-2">Payment Option (Simulation)</label>
+              <select 
+                name="paymentMethod" 
+                value={formData.paymentMethod} 
+                onChange={handleInputChange} 
+                className="w-full border border-neutral-300 p-2.5 text-xs text-neutral-950 bg-white focus:outline-none focus:border-neutral-950"
+                required
+              >
+                <option value="momo">Mobile Money (MoMo)</option>
+                <option value="card">Credit / Debit Card</option>
+                <option value="paypal">PayPal Express Checkout</option>
+              </select>
             </div>
 
             <div className="flex justify-between text-sm font-bold text-neutral-950 pt-4 border-t border-neutral-200">
@@ -177,8 +215,8 @@ const handleCheckoutSubmit = async (e: React.FormEvent) => {
               <span>${cartSubtotal.toFixed(2)}</span>
             </div>
 
-            <button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-neutral-950 text-white text-xs font-bold uppercase tracking-widest py-4 transition-all hover:bg-pink-400">
-              {isSubmitting ? "Processing..." : "Complete Purchase"}
+            <button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-neutral-950 text-white text-xs font-bold uppercase tracking-widest py-4 transition-all hover:bg-pink-400 disabled:opacity-50">
+              {isSubmitting ? "Processing Transaction..." : "Complete Purchase"}
             </button>
           </form>
         </div>
