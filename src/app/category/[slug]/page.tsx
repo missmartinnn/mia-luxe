@@ -1,7 +1,7 @@
 // src/app/category/[slug]/page.tsx
-import { prisma } from "../../../lib/prisma"; // <-- REAL DATABASE IMPORT
+import { prisma } from "../../../lib/prisma"; // Real database import
 import ProductCard from "../../../components/ui/ProductCard";
-import Link from "next/link";
+import SearchBar from "../../../components/SearchBar";
 
 // Next.js 15 requires both params and searchParams to be awaited as Promises
 export default async function CategoryPage({ 
@@ -26,13 +26,11 @@ export default async function CategoryPage({
   let baseCategoryProducts;
 
   if (currentSlug === "new-arrivals") {
-    // Grab the newest items across all categories
     baseCategoryProducts = await prisma.product.findMany({
       orderBy: { createdAt: "desc" },
-      take: 24, // Show the 24 newest items
+      take: 24, 
     });
   } else {
-    // Grab items strictly for this category (case-insensitive match)
     baseCategoryProducts = await prisma.product.findMany({
       where: {
         category: {
@@ -44,72 +42,44 @@ export default async function CategoryPage({
     });
   }
 
-  // 4. Extract a unique list of subcategories so we can build the filter menu dynamically
-  // We use filter(Boolean) just in case some products have a null subcategory
-  const availableSubcategories = Array.from(
-    new Set(baseCategoryProducts.map(p => p.subcategory).filter(Boolean))
-  );
-
-  // 5. Apply the subcategory filter if the user clicked one
+  // 4. Apply the subcategory filter behind the scenes if present in the URL query (?type=dresses)
   const displayProducts = currentTypeFilter
     ? baseCategoryProducts.filter(p => p.subcategory?.toLowerCase() === currentTypeFilter.toLowerCase())
     : baseCategoryProducts;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Category Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-light tracking-widest text-neutral-900 uppercase mb-4">
-          {pageTitle}
-        </h1>
-        <div className="h-[2px] w-16 bg-pink-300 mx-auto"></div>
+    <div className="bg-white text-neutral-900 min-h-screen pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        
+        {/* Category Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl md:text-4xl font-light tracking-widest uppercase mb-4">
+            {pageTitle} {currentTypeFilter && `• ${currentTypeFilter}`}
+          </h1>
+          <div className="h-[2px] w-16 bg-pink-300 mx-auto"></div>
+        </div>
+
+        {/* Category-Specific Search Bar */}
+        <div className="max-w-xl mx-auto mb-16 text-center bg-white p-4 relative z-10">
+          <SearchBar />
+        </div>
+
+        {/* 👇 THE SUBCATEGORY BUTTON ROW REMOVED FOR A CLEAN HIGH-FASHION LOOK 👇 */}
+
+        {/* Product Grid */}
+        {displayProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
+            {displayProducts.map((product) => (
+              <ProductCard key={product.id} product={product as any} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-neutral-500 border border-neutral-100 bg-neutral-50 rounded-sm">
+            <p className="text-sm tracking-widest uppercase font-semibold">No products found.</p>
+            <p className="text-xs mt-2">Try checking back later for fresh drops in this collection.</p>
+          </div>
+        )}
       </div>
-
-      {/* Subcategory Filter Menu */}
-      {availableSubcategories.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-3 mb-12">
-          {/* "All" button clears the filter */}
-          <Link 
-            href={`/category/${currentSlug}`} 
-            className={`text-[10px] font-bold tracking-widest uppercase px-4 py-2 border transition-all ${
-              !currentTypeFilter 
-                ? "border-neutral-900 bg-neutral-900 text-white" 
-                : "border-neutral-200 text-neutral-600 hover:border-neutral-900"
-            }`}
-          >
-            All
-          </Link>
-          
-          {/* Dynamic buttons for Jeans, Skirts, Dresses, etc. */}
-          {availableSubcategories.map((sub) => (
-            <Link 
-              key={sub} 
-              href={`/category/${currentSlug}?type=${sub?.toLowerCase()}`}
-              className={`text-[10px] font-bold tracking-widest uppercase px-4 py-2 border transition-all ${
-                currentTypeFilter === sub?.toLowerCase()
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-200 text-neutral-600 hover:border-neutral-900"
-              }`}
-            >
-              {sub}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* Product Grid */}
-      {displayProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
-          {displayProducts.map((product) => (
-            <ProductCard key={product.id} product={product as any} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 text-neutral-500 border border-neutral-100 bg-neutral-50 rounded-sm">
-          <p className="text-sm tracking-widest uppercase font-semibold">No {currentTypeFilter || 'products'} found.</p>
-          <p className="text-xs mt-2">Try clearing your filters or check back later for fresh drops.</p>
-        </div>
-      )}
     </div>
   );
 }
