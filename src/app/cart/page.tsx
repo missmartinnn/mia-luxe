@@ -1,17 +1,16 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCart } from "../../context/CartContext";
+import { useSession } from "next-auth/react";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, cartSubtotal, clearCart } = useCart();
+  const { data: session } = useSession();
   
-  // Hydration fix
   const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => { setIsMounted(true); }, []);
-
+  
   // Checkout Form State
   const [formData, setFormData] = useState({
     name: "",
@@ -25,23 +24,69 @@ export default function CartPage() {
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState("");
 
-  if (!isMounted) return null; // Wait for client mount to prevent hydration mismatch
+  useEffect(() => { 
+    setIsMounted(true); 
+  }, []);
+
+  // NEW: Pre-fill user details if they are logged in
+  useEffect(() => {
+    if (session?.user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: session.user.name || "",
+        email: session.user.email || "",
+      }));
+    }
+  }, [session]);
+
+  if (!isMounted) return null;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) return;
+    
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const mockId = `MIA-${Math.floor(100000 + Math.random() * 900000)}`;
-    setGeneratedOrderId(mockId);
-    setIsSubmitting(false);
-    setOrderConfirmed(true);
-    clearCart();
+
+    try {
+      // 1. Format the data to send to our API
+      const payload = {
+        items: cart,
+        customerName: formData.name,
+        customerEmail: formData.email,
+        customerPhone: formData.phone,
+        shippingAddress: formData.address,
+        totalAmount: cartSubtotal,
+      };
+
+      // 2. Fire the request to the database
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to process checkout");
+      }
+
+      // 3. Success! Set the real database ID and clear the cart
+      setGeneratedOrderId(data.orderId);
+      setOrderConfirmed(true);
+      clearCart();
+
+    } catch (error: any) {
+      console.error("Checkout Error:", error);
+      alert(error.message || "There was an error processing your order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (orderConfirmed) {
@@ -108,14 +153,27 @@ export default function CartPage() {
         <div className="lg:col-span-5 bg-neutral-50 border border-neutral-200 rounded-xs p-6">
           <h2 className="text-xs font-bold tracking-widest uppercase text-neutral-950 mb-4 pb-2 border-b border-neutral-300">Order Summary</h2>
           <form onSubmit={handleCheckoutSubmit} className="space-y-4">
-            <input type="text" required name="name" value={formData.name} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Full Name" />
-            <input type="email" required name="email" value={formData.email} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Email" />
-            <textarea required rows={2} name="address" value={formData.address} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Address" />
-            <div className="flex justify-between text-sm font-bold text-neutral-950 pt-4">
+            
+            {/* If logged in, we hide name/email as we already have them */}
+            {!session && (
+              <>
+                <input type="text" required name="name" value={formData.name} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Full Name" />
+                <input type="email" required name="email" value={formData.email} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950" placeholder="Email" />
+              </>
+            )}
+
+            <div className="pt-2">
+              <label className="block text-[10px] uppercase font-bold text-neutral-500 mb-2">Delivery Information</label>
+              <input type="text" required name="phone" value={formData.phone} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 mb-4" placeholder="Phone Number" />
+              <textarea required rows={3} name="address" value={formData.address} onChange={handleInputChange} className="w-full border border-neutral-300 p-2 text-xs text-neutral-950 resize-none" placeholder="Full Shipping Address" />
+            </div>
+
+            <div className="flex justify-between text-sm font-bold text-neutral-950 pt-4 border-t border-neutral-200">
               <span>Total Due:</span>
               <span>${cartSubtotal.toFixed(2)}</span>
             </div>
-            <button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-neutral-950 text-white font-bold py-4">
+
+            <button type="submit" disabled={isSubmitting} className="w-full mt-4 bg-neutral-950 text-white text-xs font-bold uppercase tracking-widest py-4 transition-all hover:bg-pink-400">
               {isSubmitting ? "Processing..." : "Complete Purchase"}
             </button>
           </form>

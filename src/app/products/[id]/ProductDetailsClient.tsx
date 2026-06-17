@@ -1,20 +1,24 @@
-// app/products/[id]/ProductDetailsClient.tsx
 "use client";
 
 import { useState } from "react";
-// Import from your Prisma generated types so it matches the DB perfectly
-import { Product } from "@prisma/client"; 
+// Import Store from Prisma so we can type the relation
+import { Product, Store } from "@prisma/client"; 
 import { useCart } from "../../../context/CartContext";
 
+// Expand the type to include the nested store object
+type ProductWithStore = Product & {
+  store: Store | null;
+};
+
 interface ProductDetailsProps {
-  product: Product;
+  product: ProductWithStore;
 }
 
 export default function ProductDetailsClient({ product }: ProductDetailsProps) {
   const { addToCart } = useCart();
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [activeImage, setActiveImage] = useState(product.images[0]);
+  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || "");
+  const [selectedColor, setSelectedColor] = useState(product.colors[0] || "");
+  const [activeImage, setActiveImage] = useState(product.images[0] || "");
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAdd = () => {
@@ -53,9 +57,17 @@ export default function ProductDetailsClient({ product }: ProductDetailsProps) {
 
       {/* RIGHT COLUMN: Product Details */}
       <div className="flex flex-col justify-center">
-        <span className="text-xs text-neutral-500 font-bold tracking-widest uppercase mb-2">
-          {product.category}
-        </span>
+        {/* NEW: Display the store name here */}
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs text-neutral-500 font-bold tracking-widest uppercase">
+            {product.category}
+          </span>
+          <span className="text-neutral-300">•</span>
+          <span className="text-[10px] text-pink-500 font-bold tracking-widest uppercase bg-pink-50 px-2 py-0.5 rounded-xs">
+            Sold by {product.store?.name || "MIA LUXE"}
+          </span>
+        </div>
+
         <h1 className="text-3xl md:text-4xl font-medium text-neutral-950 tracking-tight mb-4">
           {product.name}
         </h1>
@@ -69,48 +81,52 @@ export default function ProductDetailsClient({ product }: ProductDetailsProps) {
 
         <div className="space-y-6 mb-8">
           {/* Colors */}
-          <div>
-            <span className="text-xs text-neutral-900 uppercase tracking-wider block mb-3 font-medium">
-              Color: {selectedColor}
-            </span>
-            <div className="flex gap-2 flex-wrap">
-              {product.colors.map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
-                  className={`px-4 py-2 border transition-all text-sm ${
-                    selectedColor === color
-                      ? "border-pink-400 bg-pink-50 text-pink-700 font-medium"
-                      : "border-neutral-200 text-neutral-600 hover:border-neutral-400 bg-white"
-                  }`}
-                >
-                  {color}
-                </button>
-              ))}
+          {product.colors && product.colors.length > 0 && (
+            <div>
+              <span className="text-xs text-neutral-900 uppercase tracking-wider block mb-3 font-medium">
+                Color: {selectedColor}
+              </span>
+              <div className="flex gap-2 flex-wrap">
+                {product.colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setSelectedColor(color)}
+                    className={`px-4 py-2 border transition-all text-sm ${
+                      selectedColor === color
+                        ? "border-pink-400 bg-pink-50 text-pink-700 font-medium"
+                        : "border-neutral-200 text-neutral-600 hover:border-neutral-400 bg-white"
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Sizes */}
-          <div>
-            <span className="text-xs text-neutral-900 uppercase tracking-wider block mb-3 font-medium">
-              Size: {selectedSize}
-            </span>
-            <div className="flex gap-2 flex-wrap">
-              {product.sizes.map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setSelectedSize(size)}
-                  className={`w-12 h-12 flex items-center justify-center border font-bold transition-all text-sm ${
-                    selectedSize === size
-                      ? "border-neutral-900 bg-neutral-900 text-white"
-                      : "border-neutral-200 text-neutral-600 hover:border-neutral-400 bg-white"
-                  }`}
-                >
-                  {size}
-                </button>
-              ))}
+          {product.sizes && product.sizes.length > 0 && (
+            <div>
+              <span className="text-xs text-neutral-900 uppercase tracking-wider block mb-3 font-medium">
+                Size: {selectedSize}
+              </span>
+              <div className="flex gap-2 flex-wrap">
+                {product.sizes.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`w-12 h-12 flex items-center justify-center border font-bold transition-all text-sm ${
+                      selectedSize === size
+                        ? "border-neutral-900 bg-neutral-900 text-white"
+                        : "border-neutral-200 text-neutral-600 hover:border-neutral-400 bg-white"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <button

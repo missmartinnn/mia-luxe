@@ -9,19 +9,86 @@ datasource db {
 
 // 1. User Account Model (Authentication & Authorization)
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  role         String   @default("customer") // "customer" or "admin"
-  orders       Order[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? // Required by NextAuth
+  image         String?   // Required by NextAuth (Google Profile Pic)
+  passwordHash  String?   // Optional now! (Google users won't have one)
+  role          String    @default("customer") // "customer", "seller", "admin"
+  
+  // ---> NEW: Customer Profile Details <---
+  phone         String?   
+  address       String?   @db.Text 
+  
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  stores        Store[]   // Links sellers to their stores
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@map("users")
 }
 
-// 2. Product Catalog Model (Tailored for Fashion Inventory)
+// 2. NextAuth OAuth Account Model
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+// 3. NextAuth Session Model
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// 4. NextAuth Verification Token Model (For Email Magic Links / Password Resets)
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// 5. Store Model (The Vendor's Shop)
+model Store {
+  id          String    @id @default(uuid())
+  name        String
+  description String?   @db.Text
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("stores")
+}
+
+// 6. Product Catalog Model (Tailored for Fashion Inventory)
 model Product {
   id          String      @id @default(uuid())
   name        String
@@ -33,6 +100,10 @@ model Product {
   sizes       String[]    // e.g., ["XS", "S", "M", "L", "XL"]
   colors      String[]    // e.g., ["Pastel Pink", "Cream", "Black"]
   stock       Int         @default(0)
+  
+  storeId     String?     // Links the product to a specific store
+  store       Store?      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -40,13 +111,14 @@ model Product {
   @@map("products")
 }
 
-// 3. Order Summary Model (Tracks Completed Checkout Invoices)
+// 7. Order Summary Model (Tracks Completed Checkout Invoices)
 model Order {
   id              String      @id @default(uuid())
   userId          String?
   user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   customerName    String
   customerEmail   String
+  customerPhone   String?     // <--- NEW: Track phone used for this specific order
   shippingAddress String      @db.Text
   totalAmount     Float
   paymentStatus   String      @default("pending") // "pending", "paid", "failed"
@@ -58,7 +130,7 @@ model Order {
   @@map("orders")
 }
 
-// 4. Order Item Model (Breaks Down Individual Items inside an Order)
+// 8. Order Item Model (Breaks Down Individual Items inside an Order)
 model OrderItem {
   id        String   @id @default(uuid())
   orderId   String

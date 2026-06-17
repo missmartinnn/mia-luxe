@@ -1,5 +1,5 @@
 // src/app/category/[slug]/page.tsx
-import { MOCK_PRODUCTS } from "../../../lib/mockData";
+import { prisma } from "../../../lib/prisma"; // <-- REAL DATABASE IMPORT
 import ProductCard from "../../../components/ui/ProductCard";
 import Link from "next/link";
 
@@ -22,24 +22,44 @@ export default async function CategoryPage({
   // 2. Format the title
   const pageTitle = currentSlug.replace("-", " ");
 
-  // 3. Get the base products for the main category (Women, Men, etc.)
-  const baseCategoryProducts = currentSlug === "new-arrivals" 
-    ? MOCK_PRODUCTS 
-    : MOCK_PRODUCTS.filter(product => product.category.toLowerCase() === currentSlug.toLowerCase());
+  // 3. Fetch the base products for the main category FROM PRISMA
+  let baseCategoryProducts;
+
+  if (currentSlug === "new-arrivals") {
+    // Grab the newest items across all categories
+    baseCategoryProducts = await prisma.product.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 24, // Show the 24 newest items
+    });
+  } else {
+    // Grab items strictly for this category (case-insensitive match)
+    baseCategoryProducts = await prisma.product.findMany({
+      where: {
+        category: {
+          equals: currentSlug,
+          mode: "insensitive" 
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
 
   // 4. Extract a unique list of subcategories so we can build the filter menu dynamically
-  const availableSubcategories = Array.from(new Set(baseCategoryProducts.map(p => p.subcategory)));
+  // We use filter(Boolean) just in case some products have a null subcategory
+  const availableSubcategories = Array.from(
+    new Set(baseCategoryProducts.map(p => p.subcategory).filter(Boolean))
+  );
 
   // 5. Apply the subcategory filter if the user clicked one
   const displayProducts = currentTypeFilter
-    ? baseCategoryProducts.filter(p => p.subcategory.toLowerCase() === currentTypeFilter.toLowerCase())
+    ? baseCategoryProducts.filter(p => p.subcategory?.toLowerCase() === currentTypeFilter.toLowerCase())
     : baseCategoryProducts;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Category Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-light tracking-widest text-neutral-50 uppercase mb-4">
+        <h1 className="text-3xl md:text-4xl font-light tracking-widest text-neutral-900 uppercase mb-4">
           {pageTitle}
         </h1>
         <div className="h-[2px] w-16 bg-pink-300 mx-auto"></div>
@@ -64,9 +84,9 @@ export default async function CategoryPage({
           {availableSubcategories.map((sub) => (
             <Link 
               key={sub} 
-              href={`/category/${currentSlug}?type=${sub.toLowerCase()}`}
+              href={`/category/${currentSlug}?type=${sub?.toLowerCase()}`}
               className={`text-[10px] font-bold tracking-widest uppercase px-4 py-2 border transition-all ${
-                currentTypeFilter === sub.toLowerCase()
+                currentTypeFilter === sub?.toLowerCase()
                   ? "border-neutral-900 bg-neutral-900 text-white"
                   : "border-neutral-200 text-neutral-600 hover:border-neutral-900"
               }`}
@@ -81,12 +101,12 @@ export default async function CategoryPage({
       {displayProducts.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
           {displayProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product as any} />
           ))}
         </div>
       ) : (
         <div className="text-center py-20 text-neutral-500 border border-neutral-100 bg-neutral-50 rounded-sm">
-          <p className="text-sm tracking-widest uppercase font-semibold">No {currentTypeFilter} found.</p>
+          <p className="text-sm tracking-widest uppercase font-semibold">No {currentTypeFilter || 'products'} found.</p>
           <p className="text-xs mt-2">Try clearing your filters or check back later for fresh drops.</p>
         </div>
       )}

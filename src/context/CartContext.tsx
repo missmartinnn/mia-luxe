@@ -1,4 +1,3 @@
-// src/context/CartContext.tsx
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
@@ -28,10 +27,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Hydrate cart from localStorage safely on client mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
+    // FIX: Match the key used in the setter below!
+    const savedCart = localStorage.getItem('mialuxe_cart');
     if (savedCart) {
       try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCart(JSON.parse(savedCart));
       } catch (e) {
         console.error("Failed to parse cart storage data", e);
@@ -41,12 +40,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Sync cart state to localStorage whenever it mutates
   useEffect(() => {
-    localStorage.setItem("mialuxe_cart", JSON.stringify(cart));
+    if (cart.length > 0) {
+      localStorage.setItem("mialuxe_cart", JSON.stringify(cart));
+    } else {
+      localStorage.removeItem("mialuxe_cart");
+    }
   }, [cart]);
 
   const addToCart = (product: Product, size: string, color: string) => {
     setCart((prevCart) => {
-      // Check if exact variant already exists in cart
       const existingIndex = prevCart.findIndex(
         (item) =>
           item.product.id === product.id &&
