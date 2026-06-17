@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma"; 
 import ProductCard from "../components/ui/ProductCard";
 import SearchBar from "../components/SearchBar";
+export const dynamic = "force-dynamic";
 
 // 1. Make the component `async` so we can securely fetch from the database
 export default async function Home() {

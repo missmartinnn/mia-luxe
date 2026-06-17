@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "../../../../../lib/prisma";
 import Link from "next/link";
 import EditProductForm from "./EditProductForm";
+export const dynamic = "force-dynamic";
 
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {

@@ -3,6 +3,9 @@ import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import OrdersClient from "./OrdersClient";
+  
+
+export const dynamic = "force-dynamic";
 
 export default async function SellerOrdersPage() {
   const session = await getServerSession(authOptions);

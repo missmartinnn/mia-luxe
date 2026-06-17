@@ -3,7 +3,8 @@ import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import Link from "next/link";
-import StoreActionButtons from "./StoreActionButtons"; // Created below
+import StoreActionButtons from "./StoreActionButtons"; 
+export const dynamic = "force-dynamic";
 
 export default async function AdminStoresPage() {
   const session = await getServerSession(authOptions);

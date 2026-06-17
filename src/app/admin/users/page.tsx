@@ -3,7 +3,8 @@ import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import Link from "next/link";
-import UserBanButton from "./UserBanButton"; // Created below
+import UserBanButton from "./UserBanButton"; 
+export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
   const session = await getServerSession(authOptions);

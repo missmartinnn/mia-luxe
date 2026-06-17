@@ -2,6 +2,7 @@
 import { prisma } from "../../../lib/prisma"; // Real database import
 import ProductCard from "../../../components/ui/ProductCard";
 import SearchBar from "../../../components/SearchBar";
+export const dynamic = "force-dynamic";
 
 // Next.js 15 requires both params and searchParams to be awaited as Promises
 export default async function CategoryPage({ 

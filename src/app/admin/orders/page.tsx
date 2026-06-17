@@ -3,7 +3,8 @@ import { authOptions } from "../../api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import Link from "next/link";
-import RefundButton from "./RefundButton"; // <-- Import the new button
+import RefundButton from "./RefundButton"; 
+export const dynamic = "force-dynamic";
 
 export default async function AdminGlobalOrdersPage() {
   const session = await getServerSession(authOptions);
